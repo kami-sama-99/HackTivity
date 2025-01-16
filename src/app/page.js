@@ -1,101 +1,163 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
+import { motion, useScroll, useTransform } from 'framer-motion'
+import Link from 'next/link'
+import Image from 'next/image'
+import { Github, Twitter, Linkedin, Facebook } from 'lucide-react'
+import logo from "@/app/public/logo/HackTivity logo.png"
+import coderImg from "@/app/public/images/coding guy.png"
+import reportImg from "@/app/public/images/performance report.png"
+
+export default function Page() {
+  const { scrollY } = useScroll()
+  
+  // Slide in animations for sections
+  const worksImageX = useTransform(scrollY, [300, 600], [-100, 0])
+  const worksTextX = useTransform(scrollY, [300, 600], [100, 0])
+  const worksOpacity = useTransform(scrollY, [300, 600], [0, 1])
+  
+  const outshineImageX = useTransform(scrollY, [600, 900], [100, 0])
+  const outshineTextX = useTransform(scrollY, [600, 900], [-100, 0])
+  const outshineOpacity = useTransform(scrollY, [600, 900], [0, 1])
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-screen bg-[#0A041C]">
+      {/* Hero Section - No animation */}
+      <nav className="flex justify-between items-center p-4">
+        <div className="flex items-center gap-2">
+          <Image 
+            src={logo.src}
+            alt="Logo"
+            width={40}
+            height={40}
+            className='rounded-100'
+          />
+          <span className="text-white text-xl font-bold">HackTivity</span>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+        <div className="flex gap-4">
+          <Link href="/login" className="text-white hover:text-green-400">Login</Link>
+          <Link href="/signup" className="text-white hover:text-green-400">Sign up</Link>
+        </div>
+      </nav>
+
+      <section className="flex items-center justify-between p-8 md:p-16 bg-[#FFE5E5]">
+        <div className="max-w-xl">
+          <h1 className="text-4xl md:text-6xl font-bold mb-4 text-gray-900">
+            You Hack It
+            <br />
+            We'll Track It
+          </h1>
+          <p className="text-lg mb-6 text-gray-900">
+            A platform where coders can track what they code and keep up with their peers
+          </p>
+          <button className="relative px-8 py-3 text-white font-medium bg-black rounded-full overflow-hidden group">
+            <span className="relative z-10">Get Started</span>
+            <div className="absolute inset-0 bg-green-400 transform translate-x-full group-hover:translate-x-0 transition-transform duration-300"></div>
+          </button>
+        </div>
+        <div className="hidden md:block">
+          <div className="w-72 h-72 bg-green-400 rounded-full flex items-center justify-center">
+            <div className="w-48 h-48 bg-gray-800 rounded-lg flex items-center justify-center">
+              <span className="text-green-400 text-4xl">&lt;/&gt;</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How it works section - with slide animation */}
+      <section className="flex flex-col md:flex-row items-center justify-between p-8 md:p-16 gap-8 overflow-hidden">
+        <motion.div
+          style={{ x: worksImageX, opacity: worksOpacity }}
+          className="w-full md:w-1/2"
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+          <Image 
+            src={coderImg.src}
+            alt="How it works illustration"
+            width={400}
+            height={400}
+            className="rounded-lg w-100"
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+        </motion.div>
+        <motion.div 
+          style={{ x: worksTextX, opacity: worksOpacity }}
+          className="w-full md:w-1/2 text-white"
         >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          <h2 className="text-4xl font-bold mb-4">How it works?</h2>
+          <p className="text-lg">
+            All you need to do is sign up create a profile and just sit back and relax, 
+            let us help you have your dream coding career
+          </p>
+        </motion.div>
+      </section>
+
+      {/* Outshine section - with slide animation */}
+      <section className="flex flex-col md:flex-row-reverse items-center justify-between p-8 md:p-16 gap-16 overflow-hidden">
+        <motion.div
+          style={{ x: outshineImageX, opacity: outshineOpacity }}
+          className="w-full md:w-1/2"
         >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
+          <Image 
+            src={reportImg.src}
+            alt="Analytics illustration"
+            width={400}
+            height={400}
+            className="rounded-lg "
           />
-          Go to nextjs.org →
-        </a>
+        </motion.div>
+        <motion.div 
+          style={{ x: outshineTextX, opacity: outshineOpacity }}
+          className="w-full md:w-1/2 text-white"
+        >
+          <h2 className="text-4xl font-bold mb-4">Outshine Your Peers!</h2>
+          <p className="text-lg">
+            We give detailed performance reports that help you track your progress 
+            and see what your peers are doing
+          </p>
+        </motion.div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-[#0A041C] text-white border-t border-gray-800">
+        <div className="max-w-7xl mx-auto px-4 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+              <h3 className="text-lg font-semibold mb-4">About HackTivity</h3>
+              <p className="text-gray-400">
+                Track your coding journey and connect with fellow developers.
+              </p>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
+              <div className="flex flex-col gap-2">
+                <Link href="/about" className="text-gray-400 hover:text-green-400">About Us</Link>
+                <Link href="/contact" className="text-gray-400 hover:text-green-400">Contact Us</Link>
+                <Link href="/privacy" className="text-gray-400 hover:text-green-400">Privacy Policy</Link>
+              </div>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Connect With Us</h3>
+              <div className="flex gap-4">
+                <Link href="#" className="text-gray-400 hover:text-green-400">
+                  <Github className="w-6 h-6" />
+                </Link>
+                <Link href="#" className="text-gray-400 hover:text-green-400">
+                  <Twitter className="w-6 h-6" />
+                </Link>
+                <Link href="#" className="text-gray-400 hover:text-green-400">
+                  <Linkedin className="w-6 h-6" />
+                </Link>
+                <Link href="#" className="text-gray-400 hover:text-green-400">
+                  <Facebook className="w-6 h-6" />
+                </Link>
+              </div>
+            </div>
+          </div>
+          <div className="mt-8 pt-8 border-t border-gray-800 text-center text-gray-400">
+            <p>&copy; {new Date().getFullYear()} HackTivity. All rights reserved.</p>
+          </div>
+        </div>
       </footer>
     </div>
-  );
+  )
 }
+
