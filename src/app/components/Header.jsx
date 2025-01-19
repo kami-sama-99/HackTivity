@@ -16,7 +16,7 @@ export default function Header(){
           <span className="text-white text-xl font-bold">HackTivity</span>
         </div>
         <div className="flex gap-4">
-          <Link href="/login" className="text-white hover:text-green-400">Login</Link>
+          <Link href="/signin" className="text-white hover:text-green-400">Login</Link>
           <Link href="/signup" className="text-white hover:text-green-400">Sign up</Link>
         </div>
       </nav>
