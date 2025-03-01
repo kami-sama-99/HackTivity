@@ -21,7 +21,7 @@ export default function RegForm({ mode }) {
   const confirmPassword = useRef();
   const router = useRouter();
 
-  const { onboarding } = useOnboarding();
+  const { onboarding, loading } = useOnboarding();
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
 
@@ -33,7 +33,7 @@ export default function RegForm({ mode }) {
           setError("Passwords do not match.");
           return;
         }
-
+  
         const userCredential = await createUserWithEmailAndPassword(
           auth,
           email.current.value,
@@ -53,20 +53,27 @@ export default function RegForm({ mode }) {
           setError("Please verify your email before logging in.");
           await signOut(auth);
         } else {
-          router.push(onboarding ? "/dashboard" : "/onboarding");
+          // Wait for onboarding status to be fetched before redirecting
+          if (!loading) {
+            router.push(onboarding ? "/dashboard" : "/onboarding");
+          }
         }
       }
     } catch (error) {
       setError(error.message);
     }
   };
-
+  
   const handleOAuthSignIn = async (providerType) => {
     try {
       const provider =
         providerType === "google" ? new GoogleAuthProvider() : new GithubAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      router.push(onboarding ? "/dashboard" : "/onboarding");
+  
+      // Wait for onboarding status to be fetched before redirecting
+      if (!loading) {
+        router.push(onboarding ? "/dashboard" : "/onboarding");
+      }
     } catch (error) {
       setError(error.message);
     }
