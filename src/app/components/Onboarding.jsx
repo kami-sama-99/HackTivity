@@ -1,15 +1,15 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useOnboarding } from "@/context/OnboardingContext";
-import { useSession } from "next-auth/react";
-import { db } from "@/firebase/firebase";
+import { auth, db } from "@/firebase/firebase";
 import { doc, setDoc, Timestamp } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 
 export default function OnboardingForm() {
   const router = useRouter();
   const { setOnboarding } = useOnboarding();
-  const { data: session, status } = useSession();
+  const [userId, setUserId] = useState(null);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -22,44 +22,35 @@ export default function OnboardingForm() {
     github: "",
   });
 
+  // Monitor authentication status
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) setUserId(user.uid);
+      else router.push("/signin"); // Redirect if not signed in
+    });
+    return () => unsubscribe();
+  }, [router]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (status !== "authenticated") {
+    if (!userId) {
       console.error("User is not authenticated.");
       return;
     }
 
-    const userId = session?.user?.uid;
-    if (!userId) {
-      console.error("User ID not found.");
-      return;
-    }
-
     try {
-      // Convert DOB to Firestore Timestamp
       const formattedDOB = formData.dob ? Timestamp.fromDate(new Date(formData.dob)) : null;
 
-      // Create Firestore-compatible object
       const userData = {
-        name: formData.name,
+        ...formData,
         dob: formattedDOB,
-        profession: formData.profession,
-        field: formData.field,
-        organisation: formData.organisation,
-        linkedin: formData.linkedin,
-        leetcode: formData.leetcode,
-        github: formData.github,
-        uid: userId, // Store UID for easy lookup
+        uid: userId,
       };
 
-      // Add user data to "User Data" collection
       await setDoc(doc(db, "User Data", userId), userData, { merge: true });
-
-      // Update onboarding status to true
       await setDoc(doc(db, "Onboarding Status", userId), { status: true }, { merge: true });
 
-      // Set onboarding state and navigate to dashboard
       setOnboarding(true);
       router.push("/dashboard");
 
@@ -70,11 +61,7 @@ export default function OnboardingForm() {
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   return (
@@ -88,22 +75,31 @@ export default function OnboardingForm() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <input type="text" name="name" placeholder="Name" value={formData.name} onChange={handleChange} className="w-full p-3 rounded-md bg-white text-black placeholder-gray-500" />
-              <input type="date" name="dob" placeholder="DOB" value={formData.dob} onChange={handleChange} className="w-full p-3 rounded-md bg-white text-black placeholder-gray-500" />
-              <input type="text" name="profession" placeholder="Current Profession" value={formData.profession} onChange={handleChange} className="w-full p-3 rounded-md bg-white text-black placeholder-gray-500" />
-              <input type="text" name="field" placeholder="Field" value={formData.field} onChange={handleChange} className="w-full p-3 rounded-md bg-white text-black placeholder-gray-500" />
-              <input type="text" name="organisation" placeholder="University/Organisation" value={formData.organisation} onChange={handleChange} className="w-full p-3 rounded-md bg-white text-black placeholder-gray-500" />
-              <input type="url" name="linkedin" placeholder="Link to LinkedIn" value={formData.linkedin} onChange={handleChange} className="w-full p-3 rounded-md bg-white text-black placeholder-gray-500" />
-              <input type="url" name="leetcode" placeholder="Link to LeetCode" value={formData.leetcode} onChange={handleChange} className="w-full p-3 rounded-md bg-white text-black placeholder-gray-500" />
-              <input type="url" name="github" placeholder="Link to Github" value={formData.github} onChange={handleChange} className="w-full p-3 rounded-md bg-white text-black placeholder-gray-500" />
+              {["name", "profession", "field", "organisation", "linkedin", "leetcode", "github"].map((field) => (
+                <input
+                  key={field}
+                  type="text"
+                  name={field}
+                  placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
+                  value={formData[field]}
+                  onChange={handleChange}
+                  className="w-full p-3 rounded-md bg-white text-black placeholder-gray-500"
+                />
+              ))}
+              <input
+                type="date"
+                name="dob"
+                placeholder="DOB"
+                value={formData.dob}
+                onChange={handleChange}
+                className="w-full p-3 rounded-md bg-white text-black placeholder-gray-500"
+              />
 
               <button type="submit" className="px-6 py-2 bg-gray-200 text-black rounded-md hover:bg-gray-300 transition-colors">
                 Proceed
               </button>
             </form>
           </div>
-
-          <div className="hidden md:block">{/* Add any additional content here */}</div>
         </div>
       </div>
     </div>

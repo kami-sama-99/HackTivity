@@ -1,11 +1,18 @@
 "use client";
 
-import { createUserWithEmailAndPassword, sendEmailVerification, signOut } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+  signOut,
+  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  GithubAuthProvider,
+  signInWithPopup,
+} from "firebase/auth";
 import { auth } from "@/firebase/firebase";
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { FaGoogle, FaGithub } from "react-icons/fa";
-import { signIn } from "next-auth/react"; // Import NextAuth's signIn method
 import { useOnboarding } from "@/context/OnboardingContext";
 
 export default function RegForm({ mode }) {
@@ -22,53 +29,46 @@ export default function RegForm({ mode }) {
     e.preventDefault();
     try {
       if (mode === "signup") {
-        // Create the user in Firebase
+        if (password.current.value !== confirmPassword.current.value) {
+          setError("Passwords do not match.");
+          return;
+        }
+
         const userCredential = await createUserWithEmailAndPassword(
           auth,
           email.current.value,
           password.current.value
         );
         const user = userCredential.user;
-
-        // Send email verification
         await sendEmailVerification(user);
-
-        // Sign out immediately to prevent login before verification
         await signOut(auth);
-
         setInfo("Verification email sent! Please verify your email to continue.");
-        console.log("Verification email sent:", user);
       } else if (mode === "signin") {
-        // Sign in with NextAuth (this will trigger the 'authorize' method)
-        const res = await signIn("credentials", {
-          redirect: false,
-          email: email.current.value,
-          password: password.current.value,
-          callbackUrl: onboarding ? "/dashboard" : "/onboarding"
-        });
-
-        if (res.error) {
-          setError(res.error);
+        const userCredential = await signInWithEmailAndPassword(
+          auth,
+          email.current.value,
+          password.current.value
+        );
+        if (!userCredential.user.emailVerified) {
+          setError("Please verify your email before logging in.");
+          await signOut(auth);
+        } else {
+          router.push(onboarding ? "/dashboard" : "/onboarding");
         }
       }
     } catch (error) {
       setError(error.message);
-      console.error("Error:", error.message);
     }
   };
 
-  const handleOAuthSignIn = async (provider) => {
+  const handleOAuthSignIn = async (providerType) => {
     try {
-      const res = await signIn(provider, { 
-        redirect: false,
-        callbackUrl: onboarding ? "/dashboard" : "/onboarding",
-      });
-      if (res?.error) {
-        setError(`OAuth sign-in failed: ${res.error}`);
-      }
+      const provider =
+        providerType === "google" ? new GoogleAuthProvider() : new GithubAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      router.push(onboarding ? "/dashboard" : "/onboarding");
     } catch (error) {
       setError(error.message);
-      console.error("OAuth Sign-In Error:", error.message);
     }
   };
 
@@ -77,49 +77,28 @@ export default function RegForm({ mode }) {
       <p className="text-red-400">{error}</p>
       <p className="text-green-400">{info}</p>
 
+      <input
+        name="email"
+        type="email"
+        placeholder="Email"
+        ref={email}
+        className="bg-white text-black h-12 w-full rounded-sm px-2"
+      />
+      <input
+        name="password"
+        type="password"
+        placeholder="Password"
+        ref={password}
+        className="bg-white text-black h-12 w-full rounded-sm px-2"
+      />
       {mode === "signup" && (
-        <>
-          <input
-            name="email"
-            type="email"
-            placeholder="Email"
-            ref={email}
-            className="bg-white text-black h-12 w-full rounded-sm px-2"
-          />
-          <input
-            name="password"
-            type="password"
-            placeholder="Password"
-            ref={password}
-            className="bg-white text-black h-12 w-full rounded-sm px-2"
-          />
-          <input
-            name="confirmPassword"
-            type="password"
-            placeholder="Confirm Password"
-            ref={confirmPassword}
-            className="bg-white text-black h-12 w-full rounded-sm px-2"
-          />
-        </>
-      )}
-
-      {mode === "signin" && (
-        <>
-          <input
-            name="email"
-            type="email"
-            placeholder="Email"
-            ref={email}
-            className="bg-white text-black h-12 w-full rounded-sm px-2"
-          />
-          <input
-            name="password"
-            type="password"
-            placeholder="Password"
-            ref={password}
-            className="bg-white text-black h-12 w-full rounded-sm px-2"
-          />
-        </>
+        <input
+          name="confirmPassword"
+          type="password"
+          placeholder="Confirm Password"
+          ref={confirmPassword}
+          className="bg-white text-black h-12 w-full rounded-sm px-2"
+        />
       )}
 
       <button

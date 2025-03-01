@@ -1,8 +1,10 @@
 "use client";
 
-import { SessionProvider } from "next-auth/react";
+import { useEffect, useState } from "react";
 import { Inter } from "next/font/google";
 import { OnboardingProvider } from "@/context/OnboardingContext"; // No need to import useOnboarding
+import { auth } from "@/firebase/firebase"; // Ensure you have Firebase configured
+import { onAuthStateChanged } from "firebase/auth";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,11 +19,18 @@ function LayoutContent({ children }) {
 }
 
 export default function LayoutComp({ children }) {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
   return (
-    <SessionProvider>
-      <OnboardingProvider>
-        <LayoutContent>{children}</LayoutContent>
-      </OnboardingProvider>
-    </SessionProvider>
+    <OnboardingProvider>
+      <LayoutContent>{children}</LayoutContent>
+    </OnboardingProvider>
   );
 }

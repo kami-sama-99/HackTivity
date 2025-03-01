@@ -1,37 +1,42 @@
-'use client'
+"use client";
 
-import Header from './components/Header';
-import HeroSection from './components/HeroSection';
-import HowItWorks from './components/HowItWorks';
-import Outshine from './components/Outshine';
-import Footer from './components/Footer';
-import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/firebase/firebase";
+import Header from "./components/Header";
+import HeroSection from "./components/HeroSection";
+import HowItWorks from "./components/HowItWorks";
+import Outshine from "./components/Outshine";
+import Footer from "./components/Footer";
 
 export default function LandingPage() {
-  const { data: session, status } = useSession();
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    if (status === "authenticated") {
-      // Redirect to the dashboard if the user is signed in
-      router.push("/dashboard");
-    }
-  }, [status, router]);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        router.push("/dashboard"); // Redirect if authenticated
+      } else {
+        setLoading(false); // Stop loading if no user
+      }
+    });
 
-  if (status === "loading") {
+    return () => unsubscribe(); // Cleanup listener on unmount
+  }, [router]);
+
+  if (loading) {
     return <div>Loading...</div>;
   }
 
   return (
     <div className="min-h-screen bg-[#0A041C]">
-      <Header/>
-      <HeroSection/>
-      <HowItWorks/>
-      <Outshine/>
-      <Footer/>   
+      <Header />
+      <HeroSection />
+      <HowItWorks />
+      <Outshine />
+      <Footer />
     </div>
-  )
+  );
 }
-

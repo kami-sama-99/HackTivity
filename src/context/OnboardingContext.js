@@ -1,27 +1,23 @@
 "use client";
 
 import { createContext, useState, useContext, useEffect } from "react";
-import { useSession } from "next-auth/react";
-import { db } from "@/firebase/firebase"; // Ensure Firebase is initialized
+import { auth, db } from "@/firebase/firebase"; // Ensure Firebase is initialized
 import { doc, getDoc } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 
 // Create Context
 const OnboardingContext = createContext();
 
 // Provider Component
 export function OnboardingProvider({ children }) {
-  const { data: session, status } = useSession();
   const [onboarding, setOnboarding] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchOnboardingStatus = async () => {
-      if (status === "authenticated") {
-        const userId = session?.user?.uid; // Ensure it matches Firestore UID
-
-        if (!userId) return;
-
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
         try {
-          const docRef = doc(db, "Onboarding Status", userId);
+          const docRef = doc(db, "Onboarding Status", user.uid);
           const docSnap = await getDoc(docRef);
 
           if (docSnap.exists()) {
@@ -31,13 +27,14 @@ export function OnboardingProvider({ children }) {
           console.error("Error fetching onboarding status:", error);
         }
       }
-    };
+      setLoading(false); // Stop loading once check is complete
+    });
 
-    fetchOnboardingStatus();
-  }, [session, status]);
+    return () => unsubscribe(); // Cleanup listener on unmount
+  }, []);
 
   return (
-    <OnboardingContext.Provider value={{ onboarding, setOnboarding }}>
+    <OnboardingContext.Provider value={{ onboarding, setOnboarding, loading }}>
       {children}
     </OnboardingContext.Provider>
   );
