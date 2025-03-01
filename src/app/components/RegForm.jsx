@@ -6,6 +6,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { FaGoogle, FaGithub } from "react-icons/fa";
 import { signIn } from "next-auth/react"; // Import NextAuth's signIn method
+import { useOnboarding } from "@/context/OnboardingContext";
 
 export default function RegForm({ mode }) {
   const email = useRef();
@@ -13,6 +14,7 @@ export default function RegForm({ mode }) {
   const confirmPassword = useRef();
   const router = useRouter();
 
+  const { onboarding } = useOnboarding();
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
 
@@ -42,7 +44,7 @@ export default function RegForm({ mode }) {
           redirect: false,
           email: email.current.value,
           password: password.current.value,
-          callbackUrl: "/dashboard"
+          callbackUrl: onboarding ? "/dashboard" : "/onboarding"
         });
 
         if (res.error) {
@@ -59,7 +61,7 @@ export default function RegForm({ mode }) {
     try {
       const res = await signIn(provider, { 
         redirect: false,
-        callbackUrl: "/dashboard",
+        callbackUrl: onboarding ? "/dashboard" : "/onboarding",
       });
       if (res?.error) {
         setError(`OAuth sign-in failed: ${res.error}`);

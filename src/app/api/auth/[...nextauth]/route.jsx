@@ -80,8 +80,6 @@ const handler = NextAuth({
           provider: token.provider || null, // Add provider information to session
         };
       }
-      console.log("Session callback - token:", token);
-      console.log("Session callback - session:", session);
       return session;
     },
   }
