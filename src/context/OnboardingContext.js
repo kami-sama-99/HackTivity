@@ -16,29 +16,36 @@ export function OnboardingProvider({ children }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
-        setOnboarding(false); // Ensure onboarding resets when user logs out
+        setOnboarding(false);
         setLoading(false);
         return;
       }
-
+  
       try {
+        console.log("User id is", user.uid);
         const docRef = doc(db, "Onboarding Status", user.uid);
         const docSnap = await getDoc(docRef);
-
+  
         if (docSnap.exists()) {
-          setOnboarding(docSnap.data().status); // Fetch 'status' from Firestore
+          const status = docSnap.data().status;
+          console.log("Fetched onboarding status:", status);
+          setOnboarding(status);
         } else {
-          setOnboarding(false); // Default to false if no document exists
+          setOnboarding(false);
         }
       } catch (error) {
         console.error("Error fetching onboarding status:", error);
       } finally {
-        setLoading(false); // Ensure loading stops
+        setLoading(false);
       }
     });
-
-    return () => unsubscribe(); // Cleanup listener on unmount
+  
+    return () => unsubscribe();
   }, []);
+  
+  useEffect(() => {
+    console.log("Updated onboarding state:", onboarding);
+  }, [onboarding]); // Logs whenever onboarding state changes
 
   return (
     <OnboardingContext.Provider value={{ onboarding, setOnboarding, loading }}>
