@@ -22,6 +22,8 @@ export default function OnboardingForm() {
     github: "",
   });
 
+  const [errors, setErrors] = useState({});
+
   // Monitor authentication status
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -31,11 +33,37 @@ export default function OnboardingForm() {
     return () => unsubscribe();
   }, [router]);
 
+  // Regex patterns for URL validation
+  const urlPatterns = {
+    linkedin: /^https:\/\/(www\.)?linkedin\.com\/.*$/,
+    leetcode: /^https:\/\/(www\.)?leetcode\.com\/.*$/,
+    github: /^https:\/\/(www\.)?github\.com\/.*$/,
+  };
+
+  // Validate URLs
+  const validateUrls = () => {
+    let newErrors = {};
+    
+    Object.keys(urlPatterns).forEach((key) => {
+      if (formData[key] && !urlPatterns[key].test(formData[key])) {
+        newErrors[key] = `Invalid ${key} URL`;
+      }
+    });
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0; // Return true if no errors
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!userId) {
       console.error("User is not authenticated.");
+      return;
+    }
+
+    if (!validateUrls()) {
+      console.error("Invalid URLs detected.");
       return;
     }
 
@@ -62,6 +90,12 @@ export default function OnboardingForm() {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+
+    if (urlPatterns[e.target.name] && !urlPatterns[e.target.name].test(e.target.value)) {
+      setErrors({ ...errors, [e.target.name]: `Invalid ${e.target.name} URL` });
+    } else {
+      setErrors({ ...errors, [e.target.name]: "" });
+    }
   };
 
   return (
@@ -75,7 +109,7 @@ export default function OnboardingForm() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {["name", "profession", "field", "organisation", "linkedin", "leetcode", "github"].map((field) => (
+              {["name", "profession", "field", "organisation"].map((field) => (
                 <input
                   key={field}
                   type="text"
@@ -86,14 +120,28 @@ export default function OnboardingForm() {
                   className="w-full p-3 rounded-md bg-white text-black placeholder-gray-500"
                 />
               ))}
+              
               <input
                 type="date"
                 name="dob"
-                placeholder="DOB"
                 value={formData.dob}
                 onChange={handleChange}
                 className="w-full p-3 rounded-md bg-white text-black placeholder-gray-500"
               />
+
+              {["linkedin", "leetcode", "github"].map((field) => (
+                <div key={field}>
+                  <input
+                    type="text"
+                    name={field}
+                    placeholder={`${field.charAt(0).toUpperCase() + field.slice(1)} URL`}
+                    value={formData[field]}
+                    onChange={handleChange}
+                    className="w-full p-3 rounded-md bg-white text-black placeholder-gray-500"
+                  />
+                  {errors[field] && <p className="text-red-500 text-sm">{errors[field]}</p>}
+                </div>
+              ))}
 
               <button type="submit" className="px-6 py-2 bg-gray-200 text-black rounded-md hover:bg-gray-300 transition-colors">
                 Proceed
