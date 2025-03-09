@@ -10,11 +10,12 @@ export default function OnboardingForm() {
   const { setOnboarding } = useOnboarding();
   const [userId, setUserId] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [leetcodeData, setLeetCodeData] = useState(null);
 
   const [formData, setFormData] = useState({
     name: "",
     dob: "",
+    email: "",
+    phone: "",
     profession: "",
     field: "",
     organisation: "",
@@ -33,76 +34,62 @@ export default function OnboardingForm() {
     return () => unsubscribe();
   }, [router]);
 
-  // Function to extract username from URL
-  const extractUsername = (url) => {
-    const match = url.match(/leetcode\.com\/(?:u\/)?([^/?#]+)/);
-    return match ? match[1] : null;
-  };  
-
-  useEffect(() => {
-    const fetchLeetCode = async () => {
-      if (!formData.leetcode) return;
-
-      const username = extractUsername(formData.leetcode);
-      if (!username) {
-        setErrors((prev) => ({ ...prev, leetcode: "Invalid LeetCode URL" }));
-        return;
-      }
-
-      setLoading(true);
-      const data = await fetchLeetCodeData(username);
-      setLeetCodeData(data);
-      setLoading(false);
-    };
-
-    fetchLeetCode();
-  }, [formData.leetcode]); // Runs when LeetCode URL changes
-
   const validateForm = () => {
     let newErrors = {};
 
+    // Required fields validation
     Object.keys(formData).forEach((key) => {
       if (!formData[key] || formData[key].trim() === "") {
-        newErrors[key] = `${key.charAt(0).toUpperCase() + key.slice(1)} is required`;
+        newErrors[key] = `${
+          key.charAt(0).toUpperCase() + key.slice(1)
+        } is required`;
       }
     });
 
+    // URL validation patterns
     const urlPatterns = {
       linkedin: /^https:\/\/(www\.)?linkedin\.com\/.*$/,
       leetcode: /^https:\/\/(www\.)?leetcode\.com\/.*$/,
       github: /^https:\/\/(www\.)?github\.com\/.*$/,
     };
 
+    // Email validation pattern
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+    // Phone number validation pattern
+    const phonePattern = /^[6-9]\d{9}$/;
+
+    // URL validation
     Object.keys(urlPatterns).forEach((key) => {
-      if (formData[key] && formData[key].trim() !== "" && !urlPatterns[key].test(formData[key])) {
+      if (
+        formData[key] &&
+        formData[key].trim() !== "" &&
+        !urlPatterns[key].test(formData[key])
+      ) {
         newErrors[key] = `Invalid ${key} URL`;
       }
     });
 
+    // Email validation
+    if (
+      formData.email &&
+      formData.email.trim() !== "" &&
+      !emailPattern.test(formData.email)
+    ) {
+      newErrors.email = "Invalid email format";
+    }
+
+    // Phone validation (ignoring "+91" prefix)
+    if (formData.phone && formData.phone.trim() !== "") {
+      const phoneNumber = formData.phone.replace("+91 ", ""); // Remove "+91 " prefix if present
+      if (!phonePattern.test(phoneNumber)) {
+        newErrors.phone = "Invalid phone number";
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
-  const fetchLeetCodeData = async (username) => {
-    try {
-      const response = await fetch("/api/leetcode", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username }),
-      });
-  
-      if (!response.ok) throw new Error("Failed to fetch LeetCode data");
-  
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error("Error fetching LeetCode data:", error);
-      return null;
-    }
-  };
-  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -113,7 +100,7 @@ export default function OnboardingForm() {
       const response = await fetch("/api/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, formData, leetcodeData }),
+        body: JSON.stringify({ userId, formData }),
       });
 
       const result = await response.json();
@@ -138,7 +125,9 @@ export default function OnboardingForm() {
         <div className="grid md:grid-cols-2 gap-8">
           <div className="space-y-6">
             <h1 className="text-3xl font-bold text-white">Let's Get Started</h1>
-            <p className="text-gray-400">Before we proceed, let us get to know more about you!</p>
+            <p className="text-gray-400">
+              Before we proceed, let us get to know more about you!
+            </p>
             <form onSubmit={handleSubmit} className="space-y-4">
               {Object.keys(formData).map((field) => (
                 <div key={field}>
@@ -146,11 +135,28 @@ export default function OnboardingForm() {
                     type={field === "dob" ? "date" : "text"}
                     name={field}
                     placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-                    value={formData[field]}
-                    onChange={handleChange}
+                    value={
+                      field === "phone"
+                        ? formData.phone
+                          ? `+91 ${formData.phone}`
+                          : "+91 "
+                        : formData[field]
+                    }
+                    onChange={(e) => {
+                      if (field === "phone") {
+                        let inputValue = e.target.value.replace(/\D/g, ""); // Remove non-numeric characters
+                        if (inputValue.startsWith("91"))
+                          inputValue = inputValue.slice(2); // Remove extra "91" if present
+                        setFormData({ ...formData, phone: inputValue });
+                      } else {
+                        setFormData({ ...formData, [field]: e.target.value });
+                      }
+                    }}
                     className="w-full p-3 rounded-md bg-white text-black placeholder-gray-500"
                   />
-                  {errors[field] && <p className="text-red-500 text-sm">{errors[field]}</p>}
+                  {errors[field] && (
+                    <p className="text-red-500 text-sm">{errors[field]}</p>
+                  )}
                 </div>
               ))}
 

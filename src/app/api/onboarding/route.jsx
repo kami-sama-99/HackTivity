@@ -38,7 +38,61 @@ const fetchGitHubData = async (username) => {
     console.error("Error fetching GitHub data:", error);
     return null;
   }
-};      
+};  
+
+const fetchLeetCodeData = async (username) => {
+  try {
+    if (!username) {
+      return { error: "Username is required" };
+    }
+
+    const query = {
+      query: `
+        query getUserProfile($username: String!) {
+          matchedUser(username: $username) {
+            profile {
+              ranking
+              reputation
+            }
+            submitStats {
+              acSubmissionNum {
+                difficulty
+                count
+              }
+            }
+          }
+        }
+      `,
+      variables: { username },
+    };
+
+    const response = await fetch("https://leetcode.com/graphql", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(query),
+    });
+
+    if (!response.ok) throw new Error("Failed to fetch LeetCode data");
+
+    const data = await response.json();
+    const user = data.data.matchedUser;
+
+    if (!user) throw new Error("User not found");
+
+    return {
+      ranking: user.profile?.ranking || 0,
+      contributionPoints: user.profile?.reputation || 0,
+      easySolved: user.submitStats.acSubmissionNum.find(q => q.difficulty === "Easy")?.count || 0,
+      mediumSolved: user.submitStats.acSubmissionNum.find(q => q.difficulty === "Medium")?.count || 0,
+      hardSolved: user.submitStats.acSubmissionNum.find(q => q.difficulty === "Hard")?.count || 0,
+      totalSolved: user.submitStats.acSubmissionNum.find(q => q.difficulty === "All")?.count || 0,
+    };
+  } catch (error) {
+    console.error("Error fetching LeetCode data:", error);
+    return null;
+  }
+};
+
 
 const calculateScore = (githubData, leetcodeData) => {
     // Normalize ranking: Scale ranking between 0 and 100
@@ -57,12 +111,14 @@ const calculateScore = (githubData, leetcodeData) => {
 
 export async function POST(req) {
   try {
-    const { userId, formData, leetcodeData } = await req.json();
+    const { userId, formData } = await req.json();
 
     const githubUsername = extractUsername(formData.github, "github");
+    const leetcodeUsername = extractUsername(formData.leetcode, "leetcode");
 
-    const [githubData] = await Promise.all([
-      githubUsername ? fetchGitHubData(githubUsername) : null
+    const [githubData, leetcodeData] = await Promise.all([
+      githubUsername ? fetchGitHubData(githubUsername) : null,
+      leetcodeUsername ? fetchLeetCodeData(leetcodeUsername) : null
     ]);
 
     if (!githubData || !leetcodeData) {
