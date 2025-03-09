@@ -6,7 +6,7 @@ const extractUsername = (url, platform) => {
   try {
     const regex = {
       github: /github\.com\/([^/?]+)/,
-      leetcode: /leetcode\.com\/([^/?]+)/,
+      leetcode: /leetcode\.com\/u\/([^/?]+)/,
     };
     const match = url.match(regex[platform]);
     return match ? match[1] : null;
@@ -41,6 +41,7 @@ const fetchGitHubData = async (username) => {
 };  
 
 const fetchLeetCodeData = async (username) => {
+  console.log(username);
   try {
     if (!username) {
       return { error: "Username is required" };
