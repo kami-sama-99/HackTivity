@@ -4,7 +4,7 @@ import logo from "@/app/public/logo/HackTivity logo.png" // Ensure correct impor
 export default function ProfileCard() {
   return ( 
     <div className="py-6">
-      <div className="flex items-center bg-gray-700 text-gray-300 p-6 rounded-xl shadow-lg w-fit h-fit">
+      <div className="flex items-center text-gray-300 p-6 rounded-xl shadow-lg w-fit h-fit">
         {/* Profile Image Wrapper */}
         <div className="w-20 h-20 relative rounded-[25%] overflow-hidden">
           <Image

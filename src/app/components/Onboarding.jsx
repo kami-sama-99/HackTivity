@@ -7,7 +7,7 @@ import { onAuthStateChanged } from "firebase/auth";
 
 export default function OnboardingForm() {
   const router = useRouter();
-  const { setOnboarding } = useOnboarding();
+  const { onboarding, setOnboarding } = useOnboarding();
   const [userId, setUserId] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -33,6 +33,10 @@ export default function OnboardingForm() {
     });
     return () => unsubscribe();
   }, [router]);
+
+  useEffect(() => {
+    if (onboarding) router.push("/dashboard")
+  }, [onboarding])
 
   const validateForm = () => {
     let newErrors = {};
@@ -119,8 +123,8 @@ export default function OnboardingForm() {
     setFormData({ ...formData, [e.target.name]: e.target.value || "" });
   };
 
-  return (
-    <div className="min-h-screen bg-navy-600 p-6 md:p-12">
+  return 
+    {loading ? <div className="min-h-screen bg-navy-600 p-6 md:p-12">
       <div className="max-w-screen-xl mx-auto">
         <div className="grid md:grid-cols-2 gap-8">
           <div className="space-y-6">
@@ -171,6 +175,5 @@ export default function OnboardingForm() {
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div> : <p>Loading...</p>}
 }

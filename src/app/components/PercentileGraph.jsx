@@ -27,7 +27,7 @@ const closestPoint = percentileData.reduce((prev, curr) =>
 
 export default function PercentileGraph() {
   return (
-    <div className="bg-gray-700 p-6 rounded-xl shadow-lg w-full h-80">
+    <div className="p-6 rounded-xl shadow-lg w-full h-80">
       <h2 className="text-gray-300 text-lg font-semibold mb-4">Percentile Distribution</h2>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
