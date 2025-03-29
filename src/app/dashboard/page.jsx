@@ -10,28 +10,33 @@ import PageLayout from "../components/PageLayout";
 import PercentileGraph from "../components/PercentileGraph";
 
 export default function Dashboard() {
-  const { onboarding } = useOnboarding();
+  const { onboarding, loading: onboardingLoading } = useOnboarding(); // Track onboarding loading state
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      if (!firebaseUser) {
-        router.push("/"); // Redirect if not authenticated
-      } else if (!onboarding) {
-        router.push("/onboarding");
-      } else {
-        setUser(firebaseUser);
-      }
-      setLoading(false);
+      setUser(firebaseUser);
+      setAuthLoading(false); // Stop loading once auth state is known
     });
 
-    return () => unsubscribe(); // Cleanup subscription on unmount
-  }, [router]);
+    return () => unsubscribe();
+  }, []);
 
-  if (loading) {
-    return <div>Loading...</div>; // Show loading state
+  useEffect(() => {
+    // Ensure both auth and onboarding data are available before redirecting
+    if (!authLoading && !onboardingLoading) {
+      if (!user) {
+        router.push("/"); // Redirect to home if not authenticated
+      } else if (!onboarding) {
+        router.push("/onboarding"); // Redirect if onboarding is incomplete
+      }
+    }
+  }, [authLoading, onboardingLoading, user, onboarding, router]);
+
+  if (authLoading || onboardingLoading) {
+    return <div>Loading...</div>; // Show loading state while fetching data
   }
 
   return (

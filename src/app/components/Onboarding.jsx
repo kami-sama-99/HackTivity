@@ -10,6 +10,7 @@ export default function OnboardingForm() {
   const { onboarding, setOnboarding } = useOnboarding();
   const [userId, setUserId] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [redirecting, setRedirecting] = useState(false); // New state
 
   const [formData, setFormData] = useState({
     name: "",
@@ -35,8 +36,11 @@ export default function OnboardingForm() {
   }, [router]);
 
   useEffect(() => {
-    if (onboarding) router.push("/dashboard")
-  }, [onboarding])
+    if (onboarding) {
+      setRedirecting(true);
+      setTimeout(() => router.push("/dashboard"), 500); // Smooth transition
+    }
+  }, [onboarding, router]);
 
   const validateForm = () => {
     let newErrors = {};
@@ -111,7 +115,8 @@ export default function OnboardingForm() {
       if (!response.ok) throw new Error(result.error || "Submission failed");
 
       setOnboarding(true);
-      router.push("/dashboard");
+      setRedirecting(true); // Set redirecting state
+      setTimeout(() => router.push("/dashboard"), 500); // Smooth transition
     } catch (error) {
       console.error("Error submitting form:", error);
     } finally {
@@ -123,8 +128,16 @@ export default function OnboardingForm() {
     setFormData({ ...formData, [e.target.name]: e.target.value || "" });
   };
 
-  return 
-    {loading ? <div className="min-h-screen bg-navy-600 p-6 md:p-12">
+  if (redirecting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-navy-600">
+        <p className="text-white text-xl">Redirecting to dashboard...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-navy-600 p-6 md:p-12">
       <div className="max-w-screen-xl mx-auto">
         <div className="grid md:grid-cols-2 gap-8">
           <div className="space-y-6">
@@ -132,48 +145,54 @@ export default function OnboardingForm() {
             <p className="text-gray-400">
               Before we proceed, let us get to know more about you!
             </p>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {Object.keys(formData).map((field) => (
-                <div key={field}>
-                  <input
-                    type={field === "dob" ? "date" : "text"}
-                    name={field}
-                    placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-                    value={
-                      field === "phone"
-                        ? formData.phone
-                          ? `+91 ${formData.phone}`
-                          : "+91 "
-                        : formData[field]
-                    }
-                    onChange={(e) => {
-                      if (field === "phone") {
-                        let inputValue = e.target.value.replace(/\D/g, ""); // Remove non-numeric characters
-                        if (inputValue.startsWith("91"))
-                          inputValue = inputValue.slice(2); // Remove extra "91" if present
-                        setFormData({ ...formData, phone: inputValue });
-                      } else {
-                        setFormData({ ...formData, [field]: e.target.value });
-                      }
-                    }}
-                    className="w-full p-3 rounded-md bg-white text-black placeholder-gray-500"
-                  />
-                  {errors[field] && (
-                    <p className="text-red-500 text-sm">{errors[field]}</p>
-                  )}
-                </div>
-              ))}
 
-              <button
-                type="submit"
-                className="px-6 py-2 bg-gray-200 text-black rounded-md hover:bg-gray-300 transition-colors"
-                disabled={loading}
-              >
-                {loading ? "Processing..." : "Proceed"}
-              </button>
-            </form>
+            {loading ? (
+              <p className="text-white">Processing...</p>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {Object.keys(formData).map((field) => (
+                  <div key={field}>
+                    <input
+                      type={field === "dob" ? "date" : "text"}
+                      name={field}
+                      placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
+                      value={
+                        field === "phone"
+                          ? formData.phone
+                            ? `+91 ${formData.phone}`
+                            : "+91 "
+                          : formData[field]
+                      }
+                      onChange={(e) => {
+                        if (field === "phone") {
+                          let inputValue = e.target.value.replace(/\D/g, ""); // Remove non-numeric characters
+                          if (inputValue.startsWith("91"))
+                            inputValue = inputValue.slice(2); // Remove extra "91" if present
+                          setFormData({ ...formData, phone: inputValue });
+                        } else {
+                          setFormData({ ...formData, [field]: e.target.value });
+                        }
+                      }}
+                      className="w-full p-3 rounded-md bg-white text-black placeholder-gray-500"
+                    />
+                    {errors[field] && (
+                      <p className="text-red-500 text-sm">{errors[field]}</p>
+                    )}
+                  </div>
+                ))}
+
+                <button
+                  type="submit"
+                  className="px-6 py-2 bg-gray-200 text-black rounded-md hover:bg-gray-300 transition-colors"
+                  disabled={loading}
+                >
+                  {loading ? "Processing..." : "Proceed"}
+                </button>
+              </form>
+            )}
           </div>
         </div>
       </div>
-    </div> : <p>Loading...</p>}
+    </div>
+  );
 }

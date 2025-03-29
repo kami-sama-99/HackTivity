@@ -18,10 +18,13 @@ export default function WorkXpInfo({ formStage, setFormStage, setResumeData }) {
     let newErrors = {};
 
     if (!formData.company.trim()) newErrors.company = "Company is required.";
-    if (!formData.jobTitle.trim()) newErrors.jobTitle = "Job Title is required.";
-    if (!formData.startYear.trim()) newErrors.startYear = "Start year is required.";
+    if (!formData.jobTitle.trim())
+      newErrors.jobTitle = "Job Title is required.";
+    if (!formData.startYear.trim())
+      newErrors.startYear = "Start year is required.";
     if (!formData.endYear.trim()) newErrors.endYear = "End year is required.";
-    if (!formData.responsibilities.trim()) newErrors.responsibilities = "Responsibilities are required.";
+    if (!formData.responsibilities.trim())
+      newErrors.responsibilities = "Responsibilities are required.";
 
     if (formData.startYear && formData.endYear) {
       const start = parseInt(formData.startYear, 10);
@@ -69,7 +72,9 @@ export default function WorkXpInfo({ formStage, setFormStage, setResumeData }) {
       <div className="max-w-screen-xl mx-auto">
         <div className="grid md:grid-cols-2 gap-8">
           <div className="space-y-6">
-            <h1 className="text-3xl font-bold text-white">We haven't got enough!</h1>
+            <h1 className="text-3xl font-bold text-white">
+              We haven't got enough!
+            </h1>
             <p className="text-gray-400">Fill in your work experience!</p>
             <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
               {Object.keys(formData).map((field) => (
@@ -87,7 +92,9 @@ export default function WorkXpInfo({ formStage, setFormStage, setResumeData }) {
                     }
                     className="w-full p-3 rounded-md bg-white text-black placeholder-gray-500"
                   />
-                  {errors[field] && <p className="text-red-500 text-sm">{errors[field]}</p>}
+                  {errors[field] && (
+                    <p className="text-red-500 text-sm">{errors[field]}</p>
+                  )}
                 </div>
               ))}
               <div className="mt-6 flex gap-2">
@@ -103,27 +110,38 @@ export default function WorkXpInfo({ formStage, setFormStage, setResumeData }) {
           </div>
         </div>
         {workExperiences.length > 0 && (
-          <div className="mt-6 bg-white p-4 rounded-md">
-            <h2 className="text-xl font-bold">Added Work Experiences:</h2>
-            <ul className="space-y-3">
-              {workExperiences.map((xp, index) => (
-                <li key={index} className="flex justify-between bg-gray-200 p-2 rounded-md">
-                  <span>{xp.company} - {xp.jobTitle} ({xp.startYear} - {xp.endYear})</span>
-                  <button
-                    className="text-red-500 hover:underline"
-                    onClick={() => handleRemoveWorkXp(index)}
-                  >
-                    Remove
-                  </button>
-                </li>
-              ))}
-            </ul>
+          <div className="mt-4 mb-4 flex flex-wrap gap-2">
+            {workExperiences.map((xp, index) => (
+              <div
+                key={index}
+                className="px-3 py-1 bg-gray-800 text-white rounded-full flex items-center"
+              >
+                <span>
+                  {xp.company} - {xp.jobTitle} ({xp.startYear} - {xp.endYear})
+                </span>
+                <button
+                  className="ml-2 text-red-400 hover:text-red-600"
+                  onClick={() => handleRemoveWorkXp(index)}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
           </div>
         )}
         <div className="mt-6 flex gap-2">
           <button
             className="px-6 py-2 bg-gray-200 text-black rounded-md hover:bg-gray-300 transition-colors"
-            onClick={() => setFormStage(formStage + 1)}
+            onClick={() => {
+              setFormData({
+                company: "",
+                jobTitle: "",
+                startYear: "",
+                endYear: "",
+                responsibilities: "",
+              });
+              setFormStage(formStage + 1);
+            }}
           >
             Skip
           </button>

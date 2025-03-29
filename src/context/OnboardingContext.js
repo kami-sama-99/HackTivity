@@ -2,7 +2,7 @@
 
 import { createContext, useState, useContext, useEffect } from "react";
 import { auth, db } from "@/firebase/firebase"; // Ensure Firebase is initialized
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
 // Create Context
@@ -20,17 +20,19 @@ export function OnboardingProvider({ children }) {
         setLoading(false);
         return;
       }
-  
+
       try {
-        console.log("User id is", user.uid);
+        console.log("User ID:", user.uid);
         const docRef = doc(db, "Onboarding Status", user.uid);
         const docSnap = await getDoc(docRef);
-  
+
         if (docSnap.exists()) {
           const status = docSnap.data().status;
           console.log("Fetched onboarding status:", status);
           setOnboarding(status);
         } else {
+          console.log("No onboarding document found, creating one...");
+          await setDoc(docRef, { status: false });
           setOnboarding(false);
         }
       } catch (error) {
@@ -39,13 +41,13 @@ export function OnboardingProvider({ children }) {
         setLoading(false);
       }
     });
-  
+
     return () => unsubscribe();
   }, []);
-  
+
   useEffect(() => {
     console.log("Updated onboarding state:", onboarding);
-  }, [onboarding]); // Logs whenever onboarding state changes
+  }, [onboarding]);
 
   return (
     <OnboardingContext.Provider value={{ onboarding, setOnboarding, loading }}>
